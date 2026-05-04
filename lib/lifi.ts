@@ -110,8 +110,11 @@ export async function fetchEvmRoutes(params: EvmQuoteParams): Promise<UnifiedRou
     fromAmount: params.fromAmount,
     fromAddress: params.walletAddress,
     options: {
-      // CRITICAL: fee is a FLOAT not basis points
-      // 0.0015 = 0.15%. Never pass 15 or 0.15.
+      // CRITICAL: fee is a FLOAT not basis points. 0.0015 = 0.15%.
+      // Li.Fi's FeeForwarder forwards this directly to the fee wallet
+      // registered at portal.li.fi against this integrator string —
+      // no /withdraw call required. (Legacy FeeCollector balances from
+      // before the migration still need to be claimed via the old endpoint.)
       fee: LIFI_FEE_FLOAT,
       integrator: process.env.LIFI_INTEGRATOR ?? "tknz",
     },
