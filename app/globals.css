@@ -1201,10 +1201,10 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .row { display: flex; align-items: center; }
 .gap-8 { gap: 8px; }
 
-/* Brand-name color rules — must override theme color where these names appear */
-.brand-lifi,   span.brand-lifi   { color: #F7C2FF !important; }
-.brand-solana, span.brand-solana { color: #9945FF !important; }
-.brand-dflow,  span.brand-dflow  { color: #03E1FF !important; }
+/* Brand-name spans — neutralized to inherit surrounding text color */
+.brand-lifi,   span.brand-lifi,
+.brand-solana, span.brand-solana,
+.brand-dflow,  span.brand-dflow { color: inherit !important; }
 
 /* ======================================================
    RESPONSIVE — tablet (≤960px)
