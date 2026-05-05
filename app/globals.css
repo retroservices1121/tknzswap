@@ -21,8 +21,8 @@
   --radius-input: 14px;
   --radius-pill: 999px;
 
-  --font-display: "Syne", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: "Manrope", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
   --tknz-card-radius: 20px;
   --tknz-headline: 76px;
@@ -240,10 +240,10 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 
 .headline {
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 700;
   font-size: var(--tknz-headline, 76px);
-  line-height: 0.94;
-  letter-spacing: -0.035em;
+  line-height: 0.98;
+  letter-spacing: -0.025em;
   color: var(--text);
   margin: 22px 0 28px;
   text-wrap: balance;
@@ -879,10 +879,10 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 }
 .section-title {
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 700;
   font-size: 42px;
-  letter-spacing: -0.025em;
-  line-height: 1;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
   margin: 10px 0 0;
   max-width: 760px;
 }
@@ -928,10 +928,10 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 
 .arch-title {
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 700;
   font-size: 34px;
-  letter-spacing: -0.02em;
-  line-height: 1.05;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
 }
 .arch-card.blue  .arch-title span { color: var(--blue); }
 .arch-card.green .arch-title span { color: var(--accent); }
