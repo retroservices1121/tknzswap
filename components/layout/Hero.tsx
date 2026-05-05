@@ -40,23 +40,32 @@ export function Hero() {
           Covered user interface · Rule 15b9-1
         </span>
         <h1 className="headline">
-          Route any asset
+          The <span className="brand-solana">Solana</span>-first
           <br />
-          across <span className="brand-solana">Solana</span>
-          <span className="slash">/</span>
-          <span className="accent-b">EVM</span>
+          swap aggregator.
           <br />
-          at the best price.
+          <span className="accent-b">EVM</span> when you need it.
         </h1>
         <p className="lede">
-          tknz aggregates execution across two infrastructures.{" "}
-          <span className="brand-solana">Solana</span> orders flow through{" "}
-          <span className="brand-dflow">DFlow</span> for on-chain price improvement. EVM orders
-          flow through <span className="brand-lifi">Li.Fi</span> for multi-bridge route
-          optimization. One interface. Full disclosure. No custody.
+          tknz is built Solana-first.{" "}
+          <span className="brand-solana">Solana</span> orders route through{" "}
+          <span className="brand-dflow">DFlow</span>&rsquo;s on-chain auction with Jito-bundle
+          execution by default. EVM orders route through{" "}
+          <span className="brand-lifi">Li.Fi</span> across 17 chains and 42 bridges. One
+          interface. Full disclosure. No custody.
         </p>
 
         <div className="infra-split">
+          <div className="infra-col green">
+            <div className="infra-col-label">
+              <span className="pulse-dot" />
+              <span style={{ color: "var(--text)" }}>
+                <span className="brand-solana">SOLANA</span> LAYER · PRIMARY
+              </span>
+            </div>
+            <div className="infra-col-value brand-dflow">DFlow</div>
+            <div className="infra-col-sub">Order-flow auction · 11 makers · Jito-bundle protected</div>
+          </div>
           <div className="infra-col blue">
             <div className="infra-col-label">
               <span className="pulse-dot blue" />
@@ -64,16 +73,6 @@ export function Hero() {
             </div>
             <div className="infra-col-value brand-lifi">Li.Fi</div>
             <div className="infra-col-sub">17 chains · 42 bridges · 28 DEX aggregators</div>
-          </div>
-          <div className="infra-col green">
-            <div className="infra-col-label">
-              <span className="pulse-dot" />
-              <span style={{ color: "var(--text)" }}>
-                <span className="brand-solana">SOLANA</span> LAYER
-              </span>
-            </div>
-            <div className="infra-col-value brand-dflow">DFlow</div>
-            <div className="infra-col-sub">Order flow auction · 11 market makers</div>
           </div>
         </div>
 

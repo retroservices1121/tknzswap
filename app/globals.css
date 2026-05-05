@@ -422,6 +422,19 @@ input { font-family: inherit; border: none; outline: none; background: none; col
   display: flex; align-items: center; gap: 10px;
   padding: 4px 6px 14px;
 }
+.jito-line {
+  display: flex; align-items: center; gap: 8px;
+  margin: -8px 6px 12px;
+  padding: 6px 10px;
+  background: rgba(180,255,106,0.06);
+  border: 1px solid rgba(180,255,106,0.18);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
 .swap-head-label {
   font-family: var(--font-display);
   font-weight: 700;

@@ -207,6 +207,13 @@ export function SwapCard() {
         </button>
       </div>
 
+      {isSol && (
+        <div className="jito-line">
+          <span className="pulse-dot" style={{ background: "var(--accent)" }} />
+          Jito-bundle protected · MEV-shielded execution
+        </div>
+      )}
+
       <TokenInput
         label="From"
         tok={from}
