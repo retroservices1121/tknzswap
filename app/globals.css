@@ -396,7 +396,8 @@ input { font-family: inherit; border: none; outline: none; background: none; col
   position: sticky; top: 88px;
 }
 .swap-card {
-  width: 440px;
+  width: 100%;
+  max-width: 440px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--tknz-card-radius, 20px);
@@ -1204,3 +1205,154 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .brand-lifi,   span.brand-lifi   { color: #F7C2FF !important; }
 .brand-solana, span.brand-solana { color: #9945FF !important; }
 .brand-dflow,  span.brand-dflow  { color: #03E1FF !important; }
+
+/* ======================================================
+   RESPONSIVE — tablet (≤960px)
+====================================================== */
+@media (max-width: 960px) {
+  .page { padding: 0 24px; }
+
+  /* Hero collapses to a single column. Swap card moves under the text. */
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 36px;
+    padding: 40px 0 32px;
+  }
+  .swap-wrap { position: static; }
+  .swap-card { margin: 0 auto; }
+
+  /* Headline scales down */
+  .headline { font-size: clamp(40px, 7vw, 60px); margin: 18px 0 20px; }
+  .section-title { font-size: clamp(28px, 5vw, 36px); }
+
+  /* Stats: 4 → 2 columns */
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 20px 16px; }
+
+  /* Architecture cards: 2 → 1 column */
+  .arch-grid { grid-template-columns: 1fr; gap: 16px; }
+  .arch-card { padding: 24px 22px 22px; }
+  .arch-title { font-size: 28px; }
+
+  /* Footer: 4 → 2 columns */
+  .foot { grid-template-columns: 1fr 1fr; gap: 28px; padding: 36px 0 48px; }
+  .foot-lead { grid-column: 1 / -1; }
+
+  /* Section spacing */
+  .section { padding: 56px 0 8px; }
+}
+
+/* ======================================================
+   RESPONSIVE — phone (≤600px)
+====================================================== */
+@media (max-width: 600px) {
+  .page { padding: 0 16px; }
+
+  /* Nav: hide secondary stuff to make room for the connect button. */
+  .nav { height: 56px; }
+  .nav-inner { gap: 14px; }
+  .nav-links { display: none; }
+  .sec-badge { display: none; }
+  .logo { font-size: 19px; }
+  .connect-btn { font-size: 11px; padding: 0 12px; }
+
+  /* InfraTopbar: keep the two engine pills, drop the right-aligned meta. */
+  .infra-topbar-inner { height: auto; padding: 8px 0; flex-wrap: wrap; gap: 8px; font-size: 10px; }
+  .infra-meta { display: none; }
+  .infra-sep { display: none; }
+
+  /* Hero: tighter rhythm */
+  .hero { padding: 28px 0 24px; gap: 28px; }
+  .headline { font-size: clamp(34px, 9vw, 44px); line-height: 1.02; letter-spacing: -0.02em; margin: 14px 0 16px; }
+  .lede { font-size: 13px; }
+  .kicker { font-size: 9.5px; }
+
+  /* Infra-split callout: stack the two cells */
+  .infra-split { grid-template-columns: 1fr; }
+  .infra-col + .infra-col { border-left: none; border-top: 1px solid var(--border); }
+
+  /* Chain pills: still horizontal, but allow horizontal scroll if many */
+  .chain-pills { gap: 6px; }
+  .chain-pill { height: 30px; padding: 0 11px; font-size: 10.5px; }
+
+  /* Stats */
+  .stat-num { font-size: 24px; }
+  .stat-label { font-size: 9.5px; }
+
+  /* Swap card internal sizing */
+  .swap-card { max-width: 100%; padding: 14px; border-radius: 16px; }
+  .swap-head-label { font-size: 10px; }
+  .engine-badge { font-size: 9.5px; padding: 0 8px; height: 22px; }
+
+  /* Token input: keep tight */
+  .token-box { padding: 12px 12px 10px; }
+  .amount-input { font-size: 22px; }
+  .token-chip { font-size: 13px; padding: 6px 10px 6px 6px; }
+  .token-chip .token-icon { width: 20px; height: 20px; }
+
+  /* Routes */
+  .routes { padding: 12px; }
+  .route { padding: 9px 10px; gap: 8px; }
+  .route-out { font-size: 12.5px; }
+  .route-path { font-size: 9.5px; }
+  .route-time { font-size: 9.5px; }
+  .route-badge { font-size: 9px; padding: 2px 6px; }
+
+  /* Fees */
+  .fees { padding: 2px 12px; }
+  .fee-label { font-size: 10px; }
+  .fee-val { font-size: 11px; }
+
+  /* Swap CTA */
+  .swap-btn { height: 50px; font-size: 14px; }
+
+  /* Compliance footnote tighter */
+  .compliance { font-size: 9.5px; padding: 8px 4px 0; }
+
+  /* Section heads */
+  .section { padding: 40px 0 4px; }
+  .section-head { margin-bottom: 22px; }
+  .section-title { font-size: clamp(24px, 6vw, 30px); }
+  .section-kicker { font-size: 10px; }
+
+  /* Architecture inside cards */
+  .arch-card { padding: 22px 18px 20px; }
+  .arch-title { font-size: 24px; }
+  .arch-desc { font-size: 12px; }
+  .arch-meta { gap: 12px; padding-top: 16px; margin-top: 18px; }
+  .arch-meta-v { font-size: 12px; }
+
+  /* Footer: 2 → 1 column */
+  .foot { grid-template-columns: 1fr; gap: 24px; padding: 32px 0 40px; }
+  .foot-base { flex-direction: column; gap: 8px; align-items: flex-start; padding-top: 18px; margin-top: 22px; font-size: 9.5px; }
+
+  /* Modals: full-bleed-ish on phones */
+  .modal { width: 100%; max-width: calc(100vw - 24px); border-radius: 16px; }
+  .modal-head { padding: 16px 16px 10px; }
+  .modal-title { font-size: 15px; }
+  .search-box { margin: 0 16px; height: 40px; padding: 0 12px; }
+  .chain-filter { padding: 12px 16px 4px; }
+  .token-list { max-height: 60vh; padding: 6px 8px 14px; }
+  .token-row { padding: 9px 8px; gap: 10px; }
+  .token-row .token-icon { width: 30px; height: 30px; font-size: 11px; }
+  .token-row-main .sym { font-size: 13px; }
+
+  /* Settings: 6-cell network grid keeps 2 cols, looks fine */
+  .settings-body { padding: 6px 16px 16px; }
+  .net-opt { font-size: 11px; height: 40px; padding: 0 10px; }
+  .slip-opt { font-size: 12px; height: 38px; }
+
+  /* Disable horizontal-translate hover (no hover on touch) */
+  .route:hover { transform: none; }
+  .arch-card:hover { transform: none; }
+  .chain-pill:hover { transform: none; }
+  .token-chip:hover { transform: none; }
+  .swap-btn.green:hover, .swap-btn.blue:hover { transform: none; box-shadow: none; }
+}
+
+/* ======================================================
+   RESPONSIVE — very narrow (≤380px)
+====================================================== */
+@media (max-width: 380px) {
+  .infra-pill { font-size: 9.5px; padding: 5px 8px; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+}

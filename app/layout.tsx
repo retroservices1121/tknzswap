@@ -11,6 +11,13 @@ export const metadata: Metadata = {
     "Route any asset across Solana and EVM at the best price. Solana via DFlow. EVM via Li.Fi. Covered user interface under SEC Rule 15b9-1.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
+  themeColor: "#080A0F",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {

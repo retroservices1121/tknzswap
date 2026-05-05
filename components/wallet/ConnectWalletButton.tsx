@@ -64,7 +64,11 @@ export function ConnectWalletButton() {
 
           {open && (
             <div className="modal-backdrop" onClick={() => setOpen(false)}>
-              <div className="modal" onClick={(e) => e.stopPropagation()} style={{ width: 420 }}>
+              <div
+                className="modal"
+                onClick={(e) => e.stopPropagation()}
+                style={{ width: 420, maxWidth: "calc(100vw - 24px)" }}
+              >
                 <div className="modal-head">
                   <span className="modal-title">
                     {evmShort || solShort ? "Manage wallets" : "Connect wallet"}
