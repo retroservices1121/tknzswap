@@ -1,14 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { VersionedTransaction } from "@solana/web3.js";
+import bs58 from "bs58";
+
+import {
+  sendJitoBundle,
+  encodeTxBase58,
+  waitForBundleLanding,
+} from "@/lib/jito";
 
 export function useSolanaSwap() {
   const { publicKey, signTransaction } = useWallet();
-  const { connection } = useConnection();
   const [isSwapping, setIsSwapping] = useState(false);
   const [txid, setTxid] = useState<string | null>(null);
+  const [bundleId, setBundleId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function executeSwap(quoteResponse: object) {
@@ -18,9 +25,11 @@ export function useSolanaSwap() {
 
     setIsSwapping(true);
     setError(null);
+    setBundleId(null);
 
     try {
-      // 1. Ask the server for the swap tx (DFlow returns base64 VersionedTransaction).
+      // 1. Get the swap tx from DFlow (server proxy). DFlow bakes a Jito tip
+      //    instruction into this transaction because we requested forJitoBundle=true.
       const res = await fetch("/api/solana/swap", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -32,31 +41,32 @@ export function useSolanaSwap() {
       if (!res.ok) throw new Error(`Swap API error: ${res.status}`);
       const { swapTransaction } = (await res.json()) as { swapTransaction: string };
 
-      // 2. Deserialize.
+      // 2. Deserialize the base64 VersionedTransaction.
       const txBuffer = Buffer.from(swapTransaction, "base64");
       const transaction = VersionedTransaction.deserialize(txBuffer);
 
-      // 3. Sign with the user's wallet.
+      // 3. Sign with the user's wallet (user approves in wallet UI).
       const signed = await signTransaction(transaction);
-
-      // 4. Send raw transaction to Solana (skip preflight for Jito bundles).
       const rawTx = signed.serialize();
-      const signature = await connection.sendRawTransaction(rawTx, {
-        skipPreflight: true,
-        maxRetries: 3,
-      });
 
-      // 5. Confirm.
-      const latest = await connection.getLatestBlockhash();
-      const { value } = await connection.confirmTransaction(
-        { signature, ...latest },
-        "confirmed"
+      // The first signature is the canonical txid for the inner swap transaction.
+      const expectedSignature = bs58.encode(signed.signatures[0]);
+
+      // 4. Submit to Jito Block Engine as a bundle. This guarantees:
+      //    - No front-running by the block engine itself
+      //    - Atomic landing
+      //    - Bundle-status feedback
+      const submittedBundleId = await sendJitoBundle(encodeTxBase58(rawTx));
+      setBundleId(submittedBundleId);
+
+      // 5. Poll the Block Engine for landing confirmation.
+      const landedSignature = await waitForBundleLanding(
+        submittedBundleId,
+        expectedSignature
       );
 
-      if (value.err) throw new Error(`Transaction failed: ${JSON.stringify(value.err)}`);
-
-      setTxid(signature);
-      return signature;
+      setTxid(landedSignature);
+      return landedSignature;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Swap failed";
       setError(msg);
@@ -66,5 +76,5 @@ export function useSolanaSwap() {
     }
   }
 
-  return { executeSwap, isSwapping, txid, error };
+  return { executeSwap, isSwapping, txid, bundleId, error };
 }
