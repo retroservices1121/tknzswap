@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { EvmConnectButton } from "@/components/wallet/EvmConnectButton";
-import { SolanaConnectButton } from "@/components/wallet/SolanaConnectButton";
+import { ConnectWalletButton } from "@/components/wallet/ConnectWalletButton";
 
 const NAV_LINKS: Array<{ href: string; label: string }> = [
   { href: "/", label: "Swap" },
@@ -37,8 +36,7 @@ export function Nav() {
             <span className="pulse-dot" />
             SEC Compliant Interface
           </span>
-          <SolanaConnectButton />
-          <EvmConnectButton />
+          <ConnectWalletButton />
         </div>
       </div>
     </nav>
