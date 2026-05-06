@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function Footer() {
   return (
     <div className="page">
@@ -13,22 +15,30 @@ export function Footer() {
         </div>
         <div className="foot-col">
           <div className="foot-col-h">Product</div>
-          <a>Swap</a>
-          <a>Routes</a>
+          <Link href="/">Swap</Link>
+          <Link href="/trending">Trending</Link>
+          <Link href="/embed">Widget preview</Link>
         </div>
         <div className="foot-col">
           <div className="foot-col-h">Compliance</div>
-          <a>Covered UI policy</a>
-          <a>Disclosures</a>
+          <Link href="/framework">Framework</Link>
+          <Link href="/framework">Disclosures</Link>
         </div>
         <div className="foot-col">
           <div className="foot-col-h">Resources</div>
-          <a>Documentation</a>
-          <a>Venue coverage</a>
+          <Link href="/docs">Documentation</Link>
+          <Link href="/docs/embed">Embed integration</Link>
+          <a
+            href="https://github.com/retroservices1121/tknzswap"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GitHub
+          </a>
         </div>
         <div className="foot-base">
           <span>tknz labs · 2026 · Not investment advice</span>
-          <span>BUILD 1.4.2 · DEPLOYED 2D AGO</span>
+          <span>Source-available · github.com/retroservices1121/tknzswap</span>
         </div>
       </footer>
     </div>
