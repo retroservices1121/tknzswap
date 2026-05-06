@@ -137,6 +137,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
   flex-shrink: 0;
 }
 .pulse-dot.blue { background: var(--blue); animation-delay: 0.4s; }
+.pulse-dot.purple { background: #B073FF; animation-delay: 0.2s; }
 .pulse-dot.yellow { background: var(--yellow); }
 .pulse-dot.red { background: var(--red); }
 @keyframes pulse {
@@ -268,7 +269,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 
 .infra-split {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 0;
   margin-top: 36px;
   border: 1px solid var(--border);
@@ -308,6 +309,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 }
 .infra-col.green .infra-col-value { color: var(--accent); }
 .infra-col.blue  .infra-col-value { color: var(--blue); }
+.infra-col.purple .infra-col-value { color: #B073FF; }
 .infra-col-sub {
   margin-top: 4px;
   font-family: var(--font-mono);
@@ -909,7 +911,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 }
 
 .arch-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
+  display: grid; grid-template-columns: repeat(3, 1fr);
   gap: 20px;
 }
 .arch-card {
@@ -928,8 +930,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
   top: 0; left: 10%; right: 10%;
   height: 1px;
 }
-.arch-card.blue::before  { background: linear-gradient(90deg, transparent, var(--blue), transparent); opacity: 0.6; }
-.arch-card.green::before { background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.6; }
+.arch-card.blue::before   { background: linear-gradient(90deg, transparent, var(--blue), transparent); opacity: 0.6; }
+.arch-card.green::before  { background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.6; }
+.arch-card.purple::before { background: linear-gradient(90deg, transparent, #B073FF, transparent); opacity: 0.6; }
 
 .arch-head {
   display: flex; align-items: center; gap: 10px;
@@ -944,8 +947,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
   padding: 5px 9px;
   border-radius: 5px;
 }
-.arch-card.blue  .arch-layer-tag { background: rgba(96,165,250,0.1); color: var(--text); border: 1px solid rgba(96,165,250,0.2); }
-.arch-card.green .arch-layer-tag { background: rgba(180,255,106,0.1); color: var(--text); border: 1px solid rgba(180,255,106,0.22); }
+.arch-card.blue   .arch-layer-tag { background: rgba(96,165,250,0.1);  color: var(--text); border: 1px solid rgba(96,165,250,0.2); }
+.arch-card.green  .arch-layer-tag { background: rgba(180,255,106,0.1); color: var(--text); border: 1px solid rgba(180,255,106,0.22); }
+.arch-card.purple .arch-layer-tag { background: rgba(153,69,255,0.12); color: var(--text); border: 1px solid rgba(153,69,255,0.28); }
 
 .arch-title {
   font-family: var(--font-display);
@@ -954,8 +958,9 @@ input { font-family: inherit; border: none; outline: none; background: none; col
   letter-spacing: -0.015em;
   line-height: 1.1;
 }
-.arch-card.blue  .arch-title span { color: var(--blue); }
-.arch-card.green .arch-title span { color: var(--accent); }
+.arch-card.blue   .arch-title span { color: var(--blue); }
+.arch-card.green  .arch-title span { color: var(--accent); }
+.arch-card.purple .arch-title span { color: #B073FF; }
 
 .arch-desc {
   margin-top: 14px;
@@ -1222,6 +1227,45 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .gap-8 { gap: 8px; }
 
 /* ======================================================
+   WHAT'S NEW STRIP (homepage)
+====================================================== */
+.whats-new {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin: 16px 0 24px;
+}
+.whats-new-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text2);
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.whats-new-chip:hover {
+  color: var(--text);
+  border-color: var(--border2);
+  transform: translateY(-1px);
+}
+.whats-new-chip.green { border-color: rgba(180,255,106,0.32); color: var(--accent); }
+.whats-new-chip.green:hover { background: rgba(180,255,106,0.06); }
+.whats-new-chip.purple { border-color: rgba(153,69,255,0.32); color: #B073FF; }
+.whats-new-chip.purple:hover { background: rgba(153,69,255,0.08); }
+.whats-new-chip.blue { border-color: rgba(96,165,250,0.32); color: var(--blue); }
+.whats-new-chip.blue:hover { background: rgba(96,165,250,0.06); }
+.whats-new-chip b { font-weight: 600; color: inherit; }
+
+@media (max-width: 600px) {
+  .whats-new { margin: 12px 0 18px; }
+  .whats-new-chip { font-size: 10px; padding: 6px 10px; }
+}
+
+/* ======================================================
    EMBED WIDGET
 ====================================================== */
 .embed-shell {
@@ -1421,7 +1465,11 @@ input { font-family: inherit; border: none; outline: none; background: none; col
   /* Stats: 4 → 2 columns */
   .stats-row { grid-template-columns: 1fr 1fr; gap: 20px 16px; }
 
-  /* Architecture cards: 2 → 1 column */
+  /* Infra-split: 3 → 1 col on tablet, since the hero stacks anyway */
+  .infra-split { grid-template-columns: 1fr; }
+  .infra-col + .infra-col { border-left: none; border-top: 1px solid var(--border); }
+
+  /* Architecture cards: now 3 → 1 column */
   .arch-grid { grid-template-columns: 1fr; gap: 16px; }
   .arch-card { padding: 24px 22px 22px; }
   .arch-title { font-size: 28px; }

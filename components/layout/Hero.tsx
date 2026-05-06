@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useSwapStore } from "@/store/swap";
 import { ALL_CHAINS } from "@/lib/chains";
 import { SOLANA_TOKENS, EVM_TOKENS } from "@/lib/tokens";
@@ -32,47 +33,80 @@ export function Hero() {
     if (t) setTo(t);
   };
 
+  // Preset USDC on Base → SOL on Solana to demo the cross-VM flow in one click.
+  const previewCrossVM = () => {
+    const baseUSDC = EVM_TOKENS.find((t) => t.symbol === "USDC" && t.chainId === 8453);
+    const sol = SOLANA_TOKENS.find((t) => t.symbol === "SOL");
+    if (baseUSDC) setFrom(baseUSDC);
+    if (sol) setTo(sol);
+  };
+
   return (
     <section className="hero">
       <div>
         <span className="kicker">
-          <span className="chip-tag">V1.4</span>
+          <span className="chip-tag">V1.5</span>
           Covered user interface · Rule 15b9-1
         </span>
         <h1 className="headline">
-          The <span className="brand-solana">Solana</span>-first
+          Bridge in. Trade out.
           <br />
-          swap aggregator.
-          <br />
-          <span className="accent-b">EVM</span> when you need it.
+          <span className="brand-solana">One</span> signature.
         </h1>
         <p className="lede">
-          tknz is built Solana-first.{" "}
-          <span className="brand-solana">Solana</span> orders route through{" "}
-          <span className="brand-dflow">DFlow</span>&rsquo;s on-chain auction with Jito-bundle
-          execution by default. EVM orders route through{" "}
-          <span className="brand-lifi">Li.Fi</span> across 17 chains and 42 bridges. One
-          interface. Full disclosure. No custody.
+          tknz is the only non-custodial swap UI that aggregates{" "}
+          <span className="brand-dflow">DFlow</span> on Solana,{" "}
+          <span className="brand-lifi">Li.Fi</span> across EVM, and{" "}
+          <span style={{ color: "#B073FF", fontWeight: 600 }}>Mayan Swift</span> for atomic
+          cross-VM swaps. Bring USDC from Base, leave with SOL — in one transaction. No
+          custody. Full disclosure. Built Solana-first.
         </p>
+
+        <div className="whats-new">
+          <button
+            type="button"
+            className="whats-new-chip purple"
+            onClick={previewCrossVM}
+          >
+            <span className="pulse-dot purple" />
+            <b>NEW · Cross-VM live</b> &middot; USDC (Base) → SOL in one sig
+          </button>
+          <Link href="/trending" className="whats-new-chip green">
+            <span className="pulse-dot" />
+            <b>Trending on Solana</b> &middot; Top movers, click to trade
+          </Link>
+          <Link href="/docs/embed" className="whats-new-chip blue">
+            <span className="pulse-dot blue" />
+            <b>Embed the widget</b> &middot; Drop tknz into any product
+          </Link>
+        </div>
 
         <div className="infra-split">
           <div className="infra-col green">
             <div className="infra-col-label">
               <span className="pulse-dot" />
               <span style={{ color: "var(--text)" }}>
-                <span className="brand-solana">SOLANA</span> LAYER · PRIMARY
+                <span className="brand-solana">SOLANA</span> · PRIMARY
               </span>
             </div>
             <div className="infra-col-value brand-dflow">DFlow</div>
-            <div className="infra-col-sub">Order-flow auction · 11 makers · Jito-bundle protected</div>
+            <div className="infra-col-sub">11 makers · Jito-bundle protected</div>
+          </div>
+          <div className="infra-col purple">
+            <div className="infra-col-label">
+              <span className="pulse-dot purple" />
+              <span style={{ color: "var(--text)" }}>CROSS-VM</span>
+            </div>
+            <div className="infra-col-value">Mayan Swift</div>
+            <div className="infra-col-sub">Atomic EVM ↔ Solana · ~30s settle</div>
           </div>
           <div className="infra-col blue">
             <div className="infra-col-label">
               <span className="pulse-dot blue" />
-              <span style={{ color: "var(--text)" }}>EVM LAYER</span>
+              <span style={{ color: "var(--text)" }}>EVM</span>
             </div>
             <div className="infra-col-value brand-lifi">Li.Fi</div>
-            <div className="infra-col-sub">17 chains · 42 bridges · 28 DEX aggregators</div>
+            <div className="infra-col-sub">17 chains · 42 bridges · 28 aggregators</div>
           </div>
         </div>
 
