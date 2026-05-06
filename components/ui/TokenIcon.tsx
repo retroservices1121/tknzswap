@@ -1,39 +1,34 @@
+"use client";
+
+import { useState } from "react";
 import type { Token } from "@/types/token";
 
 export function TokenIcon({ tok, size = 26 }: { tok: Token; size?: number }) {
-  if (tok.logoURI) {
-    return (
-      <img
-        src={tok.logoURI}
-        alt={tok.symbol}
-        width={size}
-        height={size}
-        className="token-icon-img"
-        style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover" }}
-        onError={(e) => {
-          // If the logo fails to load, swap to a colored-letter fallback.
-          const el = e.currentTarget;
-          el.style.display = "none";
-          const sib = el.nextSibling as HTMLElement | null;
-          if (sib) sib.style.display = "flex";
-        }}
-      />
-    );
-  }
+  const [failed, setFailed] = useState(false);
+  const showImg = !!tok.logoURI && !failed;
 
   return (
     <div
-      className="token-icon"
+      className="token-icon-wrap"
       style={{
         width: size,
         height: size,
-        background: tok.bg,
+        background: showImg ? "var(--surface2)" : tok.bg,
         color: tok.fg,
-        fontSize: Math.round(size * 0.38),
-        display: "flex",
       }}
     >
-      {tok.symbol.slice(0, 1)}
+      {showImg ? (
+        <img
+          src={tok.logoURI}
+          alt={tok.symbol}
+          width={size}
+          height={size}
+          loading="lazy"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <span style={{ fontSize: Math.round(size * 0.4) }}>{tok.symbol.slice(0, 1)}</span>
+      )}
     </div>
   );
 }

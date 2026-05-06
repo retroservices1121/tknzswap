@@ -109,13 +109,15 @@ export default function TrendingPage() {
                 <div className="trending-rank">#{i + 1}</div>
                 <div className="trending-token">
                   {t.logoURI ? (
-                    <img
-                      src={t.logoURI}
-                      alt={t.symbol}
-                      width={40}
-                      height={40}
-                      className="trending-logo"
-                    />
+                    <span className="trending-logo-wrap">
+                      <img
+                        src={t.logoURI}
+                        alt={t.symbol}
+                        width={40}
+                        height={40}
+                        loading="lazy"
+                      />
+                    </span>
                   ) : (
                     <div
                       className="trending-logo-fallback"
