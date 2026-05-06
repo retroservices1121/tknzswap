@@ -14,6 +14,7 @@
   "dependencies": {
     "@lifi/sdk": "^3.16.3",
     "@lifi/types": "^17.78.0",
+    "@mayanfinance/swap-sdk": "^9.8.0",
     "@rainbow-me/rainbowkit": "^2.2.10",
     "@solana/wallet-adapter-phantom": "^0.9.29",
     "@solana/wallet-adapter-react": "^0.15.39",
@@ -22,6 +23,7 @@
     "@solana/web3.js": "^1.98.4",
     "@tanstack/react-query": "^5.100.9",
     "bs58": "^6.0.0",
+    "ethers": "^6.16.0",
     "next": "14.2.35",
     "react": "^18",
     "react-dom": "^18",

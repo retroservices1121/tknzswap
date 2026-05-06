@@ -7,8 +7,10 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useSwapStore } from "@/store/swap";
 import { useEvmQuote } from "@/hooks/useEvmQuote";
 import { useSolanaQuote } from "@/hooks/useSolanaQuote";
+import { useCrossQuote } from "@/hooks/useCrossQuote";
 import { useEvmSwap } from "@/hooks/useEvmSwap";
 import { useSolanaSwap } from "@/hooks/useSolanaSwap";
+import { useCrossSwap } from "@/hooks/useCrossSwap";
 
 import { TokenInput } from "./TokenInput";
 import { RouteDisplay } from "./RouteDisplay";
@@ -21,11 +23,18 @@ import { toRawAmount, fromRawAmount } from "@/lib/tokens";
 import { sortRoutes, assignBadges } from "@/lib/sort";
 import type { UnifiedRoute, RouteVenue } from "@/types/route";
 import { fmtAmt } from "@/lib/format";
+import { getExecutionLayer } from "@/lib/chains";
+import type { Quote as MayanQuote } from "@mayanfinance/swap-sdk";
 
 const SOL_VENUES: RouteVenue[] = [
   { label: "DF", bg: "#B4FF6A" },
   { label: "OB", bg: "#7DFFB3" },
   { label: "RA", bg: "#60A5FA" },
+];
+
+const MAYAN_VENUES: RouteVenue[] = [
+  { label: "MY", bg: "#9945FF" },
+  { label: "WH", bg: "#7DFFB3" },
 ];
 
 function dflowToUnified(quote: unknown): UnifiedRoute[] {
@@ -47,7 +56,6 @@ function dflowToUnified(quote: unknown): UnifiedRoute[] {
       id: "dflow-best",
       layer: "dflow",
       toAmount: q.outAmount,
-      // Decimals are filled in by the caller via fromRawAmount; here we leave a placeholder.
       toAmountReadable: 0,
       toAmountUSD: 0,
       fromAmountUSD: 0,
@@ -61,6 +69,38 @@ function dflowToUnified(quote: unknown): UnifiedRoute[] {
   ];
 }
 
+function mayanToUnified(quote: MayanQuote, fromAmountUSD: number): UnifiedRoute[] {
+  // Mayan returns relayer/bridge fees as named fields, not always USD-denominated
+  // in the type — but in practice these are denominated in the bridged token's
+  // value scale. Sum the visible cost fields for a conservative gas display.
+  const gasCostUSD =
+    (quote.swapRelayerFee ?? 0) +
+    (quote.redeemRelayerFee ?? 0) +
+    (quote.solanaRelayerFee ?? 0) +
+    (quote.bridgeFee ?? 0);
+
+  const path = `${quote.fromChain.toUpperCase()} → ${quote.toChain.toUpperCase()} · ${quote.type}`;
+
+  return [
+    {
+      id: `mayan-${quote.type.toLowerCase()}`,
+      layer: "mayan",
+      toAmount: String(quote.expectedAmountOut),
+      toAmountReadable: quote.expectedAmountOut,
+      toAmountUSD: 0, // populated by caller using to.usd
+      fromAmountUSD,
+      estimatedDurationSeconds: quote.etaSeconds ?? 30,
+      gasCostUSD,
+      venues: MAYAN_VENUES,
+      pathLabel: path,
+      badge: "best",
+      raw: quote,
+    },
+  ];
+}
+
+type Mode = "same-sol" | "same-evm" | "cross-vm";
+
 export function SwapCard() {
   const {
     from, to, amount, sort, selectedRouteId, slippageBps,
@@ -71,28 +111,34 @@ export function SwapCard() {
   const { address: evmAddress } = useAccount();
   const { publicKey: solPubkey } = useWallet();
 
-  const isSol = from?.chainId === "solana";
-  const colorClass: "green" | "blue" = isSol ? "green" : "blue";
+  // Routing decision — single source of truth in lib/chains.ts.
+  const mode: Mode = useMemo(() => {
+    if (!from || !to) return "same-sol";
+    const layer = getExecutionLayer(from.chainId, to.chainId);
+    if (layer === "dflow") return "same-sol";
+    if (layer === "lifi") return "same-evm";
+    return "cross-vm";
+  }, [from, to]);
 
-  // Decimal-aware raw amount.
+  const engine: "dflow" | "lifi" | "mayan" =
+    mode === "same-sol" ? "dflow" : mode === "same-evm" ? "lifi" : "mayan";
+  const engineColor: "green" | "blue" | "purple" =
+    mode === "same-sol" ? "green" : mode === "same-evm" ? "blue" : "purple";
+
+  // Decimal-aware raw amount (used by same-chain engines).
   const rawAmount = useMemo(
     () => (from && amount ? toRawAmount(amount, from.decimals) : "0"),
     [from, amount]
   );
 
+  // Human-readable float amount (used by Mayan).
+  const humanAmount = useMemo(() => parseFloat(amount || "0"), [amount]);
+
   const sameToken =
     from && to && from.chainId === to.chainId && from.address.toLowerCase() === to.address.toLowerCase();
 
-  // EVM quote — only when both sides are EVM and on the same chain (cross-chain via Li.Fi works
-  // but this UI is single-chain swap-first; cross-chain requires both legs to be EVM).
-  const evmEnabled =
-    !!from &&
-    !!to &&
-    !sameToken &&
-    from.chainId !== "solana" &&
-    to.chainId !== "solana" &&
-    rawAmount !== "0";
-
+  // Same-chain EVM quote.
+  const evmEnabled = mode === "same-evm" && !!from && !!to && !sameToken && rawAmount !== "0";
   const evmQuery = useEvmQuote({
     fromChainId: evmEnabled ? (from!.chainId as number) : 1,
     toChainId: evmEnabled ? (to!.chainId as number) : 1,
@@ -103,15 +149,8 @@ export function SwapCard() {
     enabled: evmEnabled,
   });
 
-  // Solana quote — both sides Solana.
-  const solEnabled =
-    !!from &&
-    !!to &&
-    !sameToken &&
-    from.chainId === "solana" &&
-    to.chainId === "solana" &&
-    rawAmount !== "0";
-
+  // Same-chain Solana quote.
+  const solEnabled = mode === "same-sol" && !!from && !!to && !sameToken && rawAmount !== "0";
   const solQuery = useSolanaQuote({
     inputMint: solEnabled ? from!.address : "",
     outputMint: solEnabled ? to!.address : "",
@@ -120,25 +159,52 @@ export function SwapCard() {
     enabled: solEnabled,
   });
 
-  // Unified routes — populated from whichever engine is active.
+  // Cross-VM quote (Mayan).
+  const crossEnabled = mode === "cross-vm" && !!from && !!to && humanAmount > 0;
+  const crossQuery = useCrossQuote({
+    fromChainId: crossEnabled ? from!.chainId : "solana",
+    toChainId: crossEnabled ? to!.chainId : "solana",
+    fromTokenAddress: crossEnabled ? from!.address : "",
+    toTokenAddress: crossEnabled ? to!.address : "",
+    amount: crossEnabled ? humanAmount : 0,
+    slippageBps,
+    enabled: crossEnabled,
+  });
+
   const routes: UnifiedRoute[] | null = useMemo(() => {
-    if (isSol) {
+    if (mode === "same-sol") {
       if (!solQuery.data || !to) return null;
       const built = dflowToUnified(solQuery.data).map((r) => ({
         ...r,
         toAmountReadable: fromRawAmount(r.toAmount, to.decimals),
         toAmountUSD: fromRawAmount(r.toAmount, to.decimals) * (to.usd ?? 0),
-        fromAmountUSD: parseFloat(amount || "0") * (from?.usd ?? 0),
+        fromAmountUSD: humanAmount * (from?.usd ?? 0),
       }));
       return assignBadges(sortRoutes(built, sort));
     }
-    if (evmQuery.data?.routes) {
-      return assignBadges(sortRoutes(evmQuery.data.routes, sort));
+    if (mode === "same-evm") {
+      if (evmQuery.data?.routes) {
+        return assignBadges(sortRoutes(evmQuery.data.routes, sort));
+      }
+      return null;
+    }
+    // cross-vm
+    if (crossQuery.data?.quote && to) {
+      const built = mayanToUnified(crossQuery.data.quote, humanAmount * (from?.usd ?? 0)).map((r) => ({
+        ...r,
+        toAmountUSD: r.toAmountReadable * (to.usd ?? 0),
+      }));
+      return built;
     }
     return null;
-  }, [isSol, solQuery.data, evmQuery.data, sort, to, from, amount]);
+  }, [mode, solQuery.data, evmQuery.data, crossQuery.data, sort, to, from, humanAmount]);
 
-  const isLoading = isSol ? solQuery.isFetching : evmQuery.isFetching;
+  const isLoading =
+    mode === "same-sol"
+      ? solQuery.isFetching
+      : mode === "same-evm"
+        ? evmQuery.isFetching
+        : crossQuery.isFetching;
 
   const activeRoute: UnifiedRoute | null = useMemo(() => {
     if (!routes || routes.length === 0) return null;
@@ -154,21 +220,23 @@ export function SwapCard() {
   // Swap execution.
   const evmSwap = useEvmSwap();
   const solSwap = useSolanaSwap();
+  const crossSwap = useCrossSwap();
   const [busy, setBusy] = useState<"signing" | "confirming" | null>(null);
+
   const onSwap = async () => {
     if (!activeRoute) return;
     try {
-      if (isSol) {
-        setBusy("signing");
+      setBusy("signing");
+      if (mode === "same-sol") {
         await solSwap.executeSwap(activeRoute.raw as object);
-      } else {
-        setBusy("signing");
-        // The unified route wraps the original Li.Fi route in `raw`.
+      } else if (mode === "same-evm") {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await evmSwap.executeEvmSwap(activeRoute.raw as any);
+      } else {
+        await crossSwap.executeCrossSwap(activeRoute.raw as MayanQuote);
       }
     } catch {
-      // Errors are surfaced via the hook's `error` field; nothing to do here.
+      // Errors surfaced via the per-hook `error` field.
     } finally {
       setBusy(null);
     }
@@ -178,39 +246,72 @@ export function SwapCard() {
   const buttonState: Parameters<typeof SwapButton>[0]["state"] = (() => {
     if (busy === "signing") return "signing";
     if (busy === "confirming") return "confirming";
-    if (isSol && !solPubkey) return "connect-solana";
-    if (!isSol && !evmAddress) return "connect-evm";
-    if (!amount || rawAmount === "0") return "enter-amount";
+    if (mode === "cross-vm") {
+      if (!evmAddress && !solPubkey) return "connect-both";
+      if (!evmAddress) return "connect-evm";
+      if (!solPubkey) return "connect-solana";
+    } else if (mode === "same-sol" && !solPubkey) {
+      return "connect-solana";
+    } else if (mode === "same-evm" && !evmAddress) {
+      return "connect-evm";
+    }
+    if (!amount || (mode === "cross-vm" ? humanAmount <= 0 : rawAmount === "0")) return "enter-amount";
     if (isLoading) return "fetching";
     if (!routes || routes.length === 0) return "no-routes";
     return "ready";
   })();
 
   return (
-    <div className={"swap-card " + (isSol ? "sol" : "evm")}>
+    <div className={"swap-card " + engineColor}>
       <div className="swap-head">
         <span className="swap-head-label">Swap</span>
-        <span className={"engine-badge " + (isSol ? "green" : "blue")}>
-          <span className="pulse-dot" style={{ background: isSol ? "var(--accent)" : "var(--blue)" }} />
-          {isSol ? (
+        <span className={"engine-badge " + engineColor}>
+          <span
+            className="pulse-dot"
+            style={{
+              background:
+                engineColor === "green"
+                  ? "var(--accent)"
+                  : engineColor === "blue"
+                    ? "var(--blue)"
+                    : "#B073FF",
+            }}
+          />
+          {engine === "dflow" && (
             <>
               <span className="brand-dflow">DFlow</span>&nbsp;engine
             </>
-          ) : (
+          )}
+          {engine === "lifi" && (
             <>
               <span className="brand-lifi">Li.Fi</span>&nbsp;engine
             </>
           )}
+          {engine === "mayan" && <>Mayan&nbsp;Swift&nbsp;·&nbsp;Cross-VM</>}
         </span>
         <button className="gear-btn" onClick={() => openModal({ type: "settings" })} type="button">
           <IconGear />
         </button>
       </div>
 
-      {isSol && (
+      {mode === "same-sol" && (
         <div className="jito-line">
           <span className="pulse-dot" style={{ background: "var(--accent)" }} />
           Jito-bundle protected · MEV-shielded execution
+        </div>
+      )}
+
+      {mode === "cross-vm" && (
+        <div
+          className="jito-line"
+          style={{
+            background: "rgba(153,69,255,0.06)",
+            border: "1px solid rgba(153,69,255,0.22)",
+            color: "#B073FF",
+          }}
+        >
+          <span className="pulse-dot" style={{ background: "#B073FF" }} />
+          Atomic cross-VM · One signature · ~{Math.round((crossQuery.data?.quote?.etaSeconds ?? 30))}s eta
         </div>
       )}
 
@@ -249,21 +350,21 @@ export function SwapCard() {
         onSelect={setSelectedRoute}
         sort={sort}
         onSort={setSort}
-        chainColor={colorClass}
+        chainColor={engineColor === "purple" ? "green" : engineColor}
         loading={isLoading && !routes}
       />
 
-      {activeRoute && <FeeDisclosure isSol={isSol} route={activeRoute} />}
+      {activeRoute && <FeeDisclosure engine={engine} route={activeRoute} />}
 
       <SwapButton
         state={buttonState}
         fromSym={from?.symbol}
         toSym={to?.symbol}
-        isSol={isSol}
+        engineColor={engineColor}
         onClick={onSwap}
       />
 
-      <ComplianceNotice isSol={isSol} />
+      <ComplianceNotice engine={engine} />
     </div>
   );
 }

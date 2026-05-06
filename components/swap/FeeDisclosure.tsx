@@ -3,24 +3,34 @@ import { LIFI_FEE_FLOAT, FEE_DISPLAY_PCT } from "@/lib/fee";
 import type { UnifiedRoute } from "@/types/route";
 
 interface Props {
-  isSol: boolean;
+  engine: "lifi" | "dflow" | "mayan";
   route: UnifiedRoute;
 }
 
-export function FeeDisclosure({ isSol, route }: Props) {
+export function FeeDisclosure({ engine, route }: Props) {
   const feeUSD = route.fromAmountUSD * LIFI_FEE_FLOAT;
   const gasUSD = route.gasCostUSD;
   const totalUSD = feeUSD + gasUSD;
 
-  const paramText = isSol ? (
-    <>
-      <span className="brand-dflow">DFlow</span> price improvement
-    </>
-  ) : (
-    <>
-      <span className="brand-lifi">Li.Fi</span> route optimization
-    </>
-  );
+  const paramText = (() => {
+    if (engine === "dflow") {
+      return (
+        <>
+          <span className="brand-dflow">DFlow</span> price improvement
+        </>
+      );
+    }
+    if (engine === "lifi") {
+      return (
+        <>
+          <span className="brand-lifi">Li.Fi</span> route optimization
+        </>
+      );
+    }
+    return <>Mayan Swift cross-VM settlement</>;
+  })();
+
+  const gasLabel = engine === "mayan" ? "Network + relayer fees" : "Network gas";
 
   return (
     <div className="fees">
@@ -37,8 +47,8 @@ export function FeeDisclosure({ isSol, route }: Props) {
       </div>
       <div className="fee-row">
         <span className="fee-label">
-          Network gas{" "}
-          <span className="info-i" title="Estimated network gas at current conditions">
+          {gasLabel}{" "}
+          <span className="info-i" title="Estimated network and relayer cost at current conditions">
             i
           </span>
         </span>

@@ -1,5 +1,5 @@
 export type ChainType = "evm" | "solana";
-export type ExecutionLayer = "lifi" | "dflow";
+export type ExecutionLayer = "lifi" | "dflow" | "mayan";
 export type ChainId = number | "solana";
 
 export interface EvmChain {
@@ -33,8 +33,15 @@ export type AnyChain = EvmChain | typeof SOLANA_CHAIN;
 export const ALL_CHAINS: readonly AnyChain[] = [SOLANA_CHAIN, ...EVM_CHAINS];
 
 // THE single routing decision. Never put this logic anywhere else.
-export function getExecutionLayer(chainId: ChainId): ExecutionLayer {
-  return chainId === "solana" ? "dflow" : "lifi";
+//   same-chain Solana → DFlow (auction, Jito-bundle protected)
+//   same-chain EVM    → Li.Fi (multi-bridge route optimization)
+//   cross-VM (EVM ↔ Solana) → Mayan (Swift atomic cross-VM swap)
+export function getExecutionLayer(fromChainId: ChainId, toChainId: ChainId): ExecutionLayer {
+  const fromIsSol = fromChainId === "solana";
+  const toIsSol = toChainId === "solana";
+  if (fromIsSol && toIsSol) return "dflow";
+  if (!fromIsSol && !toIsSol) return "lifi";
+  return "mayan";
 }
 
 export function getChainType(chainId: ChainId): ChainType {

@@ -465,6 +465,11 @@ input { font-family: inherit; border: none; outline: none; background: none; col
   border: 1px solid rgba(96,165,250,0.28);
   color: var(--blue);
 }
+.engine-badge.purple {
+  background: rgba(153,69,255,0.14);
+  border: 1px solid rgba(153,69,255,0.32);
+  color: #B073FF;
+}
 .engine-badge .pulse-dot { width: 5px; height: 5px; }
 
 .gear-btn {
@@ -803,6 +808,8 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .swap-btn.green:hover { background: #C3FF82; transform: translateY(-1px); box-shadow: 0 8px 24px -10px rgba(180,255,106,0.55); }
 .swap-btn.blue { background: var(--blue); color: #fff; }
 .swap-btn.blue:hover { background: #7FB6FB; transform: translateY(-1px); box-shadow: 0 8px 24px -10px rgba(96,165,250,0.55); }
+.swap-btn.purple { background: #9945FF; color: #fff; }
+.swap-btn.purple:hover { background: #B073FF; transform: translateY(-1px); box-shadow: 0 8px 24px -10px rgba(153,69,255,0.55); }
 .swap-btn.disabled,
 .swap-btn:disabled {
   background: var(--surface2);
@@ -1359,7 +1366,7 @@ input { font-family: inherit; border: none; outline: none; background: none; col
   .arch-card:hover { transform: none; }
   .chain-pill:hover { transform: none; }
   .token-chip:hover { transform: none; }
-  .swap-btn.green:hover, .swap-btn.blue:hover { transform: none; box-shadow: none; }
+  .swap-btn.green:hover, .swap-btn.blue:hover, .swap-btn.purple:hover { transform: none; box-shadow: none; }
 }
 
 /* ======================================================

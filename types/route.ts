@@ -9,7 +9,7 @@ export type RouteBadge = "best" | "fastest" | "cheap";
 
 export interface UnifiedRoute {
   id: string;
-  layer: "lifi" | "dflow";
+  layer: "lifi" | "dflow" | "mayan";
 
   // Display
   toAmount: string;          // raw token units in smallest denom

@@ -2,6 +2,7 @@ interface Props {
   state:
     | "connect-evm"
     | "connect-solana"
+    | "connect-both"
     | "enter-amount"
     | "fetching"
     | "no-routes"
@@ -11,15 +12,15 @@ interface Props {
     | "complete";
   fromSym?: string;
   toSym?: string;
-  isSol: boolean;
+  engineColor: "green" | "blue" | "purple";
   onClick?: () => void;
 }
 
-export function SwapButton({ state, fromSym, toSym, isSol, onClick }: Props) {
-  const colorClass = isSol ? "green" : "blue";
+export function SwapButton({ state, fromSym, toSym, engineColor, onClick }: Props) {
   const disabled =
     state === "connect-evm" ||
     state === "connect-solana" ||
+    state === "connect-both" ||
     state === "enter-amount" ||
     state === "fetching" ||
     state === "no-routes" ||
@@ -30,6 +31,7 @@ export function SwapButton({ state, fromSym, toSym, isSol, onClick }: Props) {
     switch (state) {
       case "connect-evm": return "Connect EVM wallet";
       case "connect-solana": return "Connect Solana wallet";
+      case "connect-both": return "Connect both wallets";
       case "enter-amount": return "Enter amount";
       case "fetching": return "Fetching routes…";
       case "no-routes": return "No routes found";
@@ -43,7 +45,7 @@ export function SwapButton({ state, fromSym, toSym, isSol, onClick }: Props) {
   return (
     <button
       type="button"
-      className={"swap-btn " + (disabled ? "disabled" : colorClass)}
+      className={"swap-btn " + (disabled ? "disabled" : engineColor)}
       disabled={disabled}
       onClick={onClick}
     >
