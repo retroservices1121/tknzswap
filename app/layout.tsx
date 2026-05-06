@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "@/providers/Providers";
-import { Nav } from "@/components/layout/Nav";
-import { InfraTopbar } from "@/components/layout/InfraTopbar";
-import { Footer } from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
   title: "tknz — SEC-compliant cross-chain swap aggregator",
   description:
-    "Route any asset across Solana and EVM at the best price. Solana via DFlow. EVM via Li.Fi. Covered user interface under SEC Rule 15b9-1.",
+    "Route any asset across Solana and EVM at the best price. Solana via DFlow. EVM via Li.Fi. Cross-VM via Mayan. Covered user interface under SEC Rule 15b9-1.",
 };
 
 export const viewport = {
@@ -32,12 +29,7 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Providers>
-          <Nav />
-          <InfraTopbar />
-          {children}
-          <Footer />
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

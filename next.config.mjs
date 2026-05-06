@@ -22,6 +22,22 @@ const nextConfig = {
     );
     return config;
   },
+  async headers() {
+    return [
+      {
+        // Embeddable widget — allow framing from anywhere.
+        // Embedders are responsible for vetting the source they render.
+        source: "/embed",
+        headers: [
+          { key: "X-Frame-Options", value: "ALLOWALL" },
+          {
+            key: "Content-Security-Policy",
+            value: "frame-ancestors *",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
