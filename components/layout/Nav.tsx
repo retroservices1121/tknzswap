@@ -8,8 +8,7 @@ import { ConnectWalletButton } from "@/components/wallet/ConnectWalletButton";
 const NAV_LINKS: Array<{ href: string; label: string }> = [
   { href: "/", label: "Swap" },
   { href: "/trending", label: "Trending" },
-  { href: "/routes", label: "Routes" },
-  { href: "/analytics", label: "Analytics" },
+  { href: "/framework", label: "Framework" },
   { href: "/docs", label: "Docs" },
 ];
 
