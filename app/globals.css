@@ -113,6 +113,76 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 .nav-spacer { flex: 1; }
 .nav-right { display: flex; align-items: center; gap: 12px; }
 
+/* Hamburger button — hidden by default; revealed in the mobile breakpoint. */
+.nav-burger {
+  display: none;
+  width: 36px; height: 36px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+}
+.nav-burger span {
+  position: absolute;
+  left: 8px; right: 8px;
+  height: 1.5px;
+  background: var(--text);
+  border-radius: 1px;
+  transition: transform 0.18s, opacity 0.18s, top 0.18s;
+}
+.nav-burger span:nth-child(1) { top: 11px; }
+.nav-burger span:nth-child(2) { top: 17px; }
+.nav-burger span:nth-child(3) { top: 23px; }
+.nav-burger.open span:nth-child(1) { top: 17px; transform: rotate(45deg); }
+.nav-burger.open span:nth-child(2) { opacity: 0; }
+.nav-burger.open span:nth-child(3) { top: 17px; transform: rotate(-45deg); }
+
+/* Mobile menu sheet */
+.mobile-menu {
+  position: fixed;
+  inset: 56px 0 0 0;
+  background: rgba(8,10,15,0.86);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  z-index: 39;
+  animation: mobile-menu-in 0.22s ease-out;
+}
+.mobile-menu-panel {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 18px 16px 22px;
+}
+.mobile-menu-links {
+  display: flex; flex-direction: column;
+}
+.mobile-menu-link {
+  display: block;
+  padding: 16px 8px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.01em;
+  color: var(--text2);
+  text-transform: uppercase;
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.mobile-menu-link:last-child { border-bottom: none; }
+.mobile-menu-link.active { color: var(--accent); }
+.mobile-menu-link:active { background: var(--surface); }
+.mobile-menu-foot {
+  margin-top: 16px;
+  padding: 14px 8px 0;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: center;
+}
+@keyframes mobile-menu-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .sec-badge {
   display: inline-flex;
   align-items: center;
@@ -1514,11 +1584,12 @@ input { font-family: inherit; border: none; outline: none; background: none; col
 @media (max-width: 600px) {
   .page { padding: 0 16px; }
 
-  /* Nav: hide secondary stuff to make room for the connect button. */
+  /* Nav: hide desktop links + sec-badge, surface the burger button. */
   .nav { height: 56px; }
   .nav-inner { gap: 14px; }
   .nav-links { display: none; }
-  .sec-badge { display: none; }
+  .nav-right .sec-badge { display: none; }
+  .nav-burger { display: inline-block; }
   .logo { font-size: 19px; }
   .connect-btn { font-size: 11px; padding: 0 12px; }
 
