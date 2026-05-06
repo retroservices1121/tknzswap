@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSwapStore } from "@/store/swap";
-import { ALL_TOKENS } from "@/lib/tokens";
+import { EVM_TOKENS, SOLANA_TOKENS } from "@/lib/tokens";
+import { useSolanaTokenRegistry } from "@/hooks/useSolanaTokenRegistry";
 import { TokenIcon } from "@/components/ui/TokenIcon";
 import { IconClose, IconSearch } from "@/components/ui/Icons";
 import { fmtAmt, fmtUSD } from "@/lib/format";
@@ -16,11 +17,28 @@ const FILTERS: Array<{ id: ChainFilter; label: React.ReactNode; color: "neutral"
   { id: "evm", label: "EVM", color: "blue" },
 ];
 
+const SOLANA_MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const RENDER_LIMIT = 120;
+
+function dedupeByMint(tokens: Token[]): Token[] {
+  const seen = new Set<string>();
+  const out: Token[] = [];
+  for (const t of tokens) {
+    const key = `${t.chainId}:${t.address.toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(t);
+  }
+  return out;
+}
+
 export function TokenModal() {
   const { modal, closeModal, setFrom, setTo } = useSwapStore();
   const [q, setQ] = useState("");
   const [chainFilter, setChainFilter] = useState<ChainFilter>("all");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const { data: registry, isLoading: registryLoading } = useSolanaTokenRegistry();
 
   const open = modal?.type === "token";
   const side = open ? modal.side : null;
@@ -43,19 +61,36 @@ export function TokenModal() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, closeModal]);
 
+  // Featured tokens (the curated 8) come first, then the full Jupiter registry,
+  // deduped on mint. EVM is the static list — Li.Fi has its own quote-time
+  // resolution and we don't need a live registry for it today.
+  const universe: Token[] = useMemo(() => {
+    if (chainFilter === "evm") return EVM_TOKENS;
+    const sol = dedupeByMint([...SOLANA_TOKENS, ...(registry ?? [])]);
+    if (chainFilter === "sol") return sol;
+    return [...sol, ...EVM_TOKENS];
+  }, [chainFilter, registry]);
+
+  const filtered: Token[] = useMemo(() => {
+    if (!q) return universe;
+    const needle = q.toLowerCase().trim();
+    return universe.filter(
+      (t) =>
+        t.symbol.toLowerCase().includes(needle) ||
+        t.name.toLowerCase().includes(needle) ||
+        t.address.toLowerCase().includes(needle)
+    );
+  }, [universe, q]);
+
+  const queryIsUnverifiedMint =
+    chainFilter !== "evm" &&
+    filtered.length === 0 &&
+    SOLANA_MINT_RE.test(q.trim());
+
   if (!open) return null;
 
-  const filtered = ALL_TOKENS.filter((t) => {
-    if (chainFilter === "sol" && t.chainId !== "solana") return false;
-    if (chainFilter === "evm" && t.chainId === "solana") return false;
-    if (!q) return true;
-    const needle = q.toLowerCase();
-    return (
-      t.symbol.toLowerCase().includes(needle) ||
-      t.name.toLowerCase().includes(needle) ||
-      t.address.toLowerCase().includes(needle)
-    );
-  });
+  const visible = filtered.slice(0, RENDER_LIMIT);
+  const truncated = filtered.length - visible.length;
 
   const onPick = (t: Token) => {
     if (side === "from") setFrom(t);
@@ -80,7 +115,7 @@ export function TokenModal() {
             ref={inputRef}
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search name or paste address"
+            placeholder="Search name, symbol, or paste mint address"
           />
         </div>
         <div className="chain-filter">
@@ -97,11 +132,35 @@ export function TokenModal() {
           ))}
         </div>
         <div className="token-list">
-          {filtered.map((t, i) => (
-            <div key={t.symbol + String(t.chainId) + i} className="token-row" onClick={() => onPick(t)}>
+          {visible.map((t, i) => (
+            <div
+              key={t.symbol + String(t.chainId) + t.address + i}
+              className="token-row"
+              onClick={() => onPick(t)}
+            >
               <TokenIcon tok={t} size={34} />
               <div className="token-row-main">
-                <div className="sym">{t.symbol}</div>
+                <div className="sym">
+                  {t.symbol}
+                  {t.verified === false && (
+                    <span
+                      style={{
+                        marginLeft: 8,
+                        padding: "1px 6px",
+                        background: "rgba(255,165,0,0.14)",
+                        border: "1px solid rgba(255,165,0,0.4)",
+                        borderRadius: 4,
+                        color: "#FFA500",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 9,
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Unverified
+                    </span>
+                  )}
+                </div>
                 <div className="name">
                   <span className={"chain-tag " + (t.chainId === "solana" ? "sol" : "evm")}>
                     {t.chainId === "solana" ? "SOL" : `EVM ${t.chainId}`}
@@ -115,6 +174,23 @@ export function TokenModal() {
               </div>
             </div>
           ))}
+
+          {truncated > 0 && (
+            <div
+              style={{
+                padding: "16px 0 8px",
+                textAlign: "center",
+                fontFamily: "var(--font-mono)",
+                fontSize: 10.5,
+                color: "var(--text3)",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+              }}
+            >
+              {truncated.toLocaleString()} more · keep typing to narrow
+            </div>
+          )}
+
           {filtered.length === 0 && (
             <div
               style={{
@@ -127,7 +203,11 @@ export function TokenModal() {
                 textTransform: "uppercase",
               }}
             >
-              No tokens match
+              {registryLoading
+                ? "Loading registry…"
+                : queryIsUnverifiedMint
+                  ? "Unverified mint — not yet supported"
+                  : "No tokens match"}
             </div>
           )}
         </div>

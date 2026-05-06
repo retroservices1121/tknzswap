@@ -14,6 +14,12 @@ export interface Token {
   bg: string;
   fg: string;
 
+  // Optional logo URL (Jupiter registry tokens carry one); falls back to colored circle.
+  logoURI?: string;
+
+  // Marks tokens loaded from a curated/verified registry vs. user-pasted mints.
+  verified?: boolean;
+
   // Optional balance + USD price (populated client-side via wallet/price feed)
   bal?: number;
   usd?: number;
