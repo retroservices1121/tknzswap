@@ -1,20 +1,14 @@
 import "server-only";
 import type { Token } from "@/types/token";
 
-// Jupiter Tokens V2 API — the de facto curated Solana token list.
-// "verified" tag endpoint returns Solana tokens that pass Jupiter's quality
-// criteria. DFlow's market makers can route against effectively the same
-// universe (any SPL with on-chain liquidity Jupiter has indexed).
-//
-// We use the lite-api variant which does not require an API key, so the
-// service works in any deployment environment without secret configuration.
-// The authenticated variant is `https://api.jup.ag/...` with x-api-key header.
+// Jupiter Tokens V2 API — lite-api variant (no key required).
+// Verified by direct fetch: returns a JSON array of token objects with the
+// V2 schema (id, icon, symbol, name, decimals, isVerified, tags, ...).
 const JUPITER_VERIFIED = "https://lite-api.jup.ag/tokens/v2/tag?query=verified";
 
-// Fallback for the older endpoint shape (some upstream caches still serve it).
+// Legacy fallback in case any upstream cache still serves the old shape.
 const JUPITER_LEGACY = "https://tokens.jup.ag/tokens?tags=verified";
 
-// V2 schema — id is the mint address, icon is the logo URL.
 interface JupiterTokenV2 {
   id: string;
   symbol: string;
@@ -25,7 +19,6 @@ interface JupiterTokenV2 {
   isVerified?: boolean;
 }
 
-// Legacy schema — address is the mint address, logoURI is the logo URL.
 interface JupiterTokenLegacy {
   address: string;
   symbol: string;
@@ -82,42 +75,63 @@ function normalizeFromLegacy(raw: JupiterTokenLegacy[]): Token[] {
     }));
 }
 
+// Common fetch options:
+//   - cache: "no-store" bypasses Next's data cache so a previous failed
+//     fetch can't poison our results for an hour
+//   - User-Agent identifies us cleanly so lite-api doesn't reject us as
+//     an anonymous bot client
+const fetchOpts: RequestInit = {
+  headers: {
+    Accept: "application/json",
+    "User-Agent": "tknz/1.0 (+https://tknz.xyz; +https://github.com/retroservices1121/tknzswap)",
+  },
+  cache: "no-store",
+};
+
 async function fetchV2(): Promise<Token[]> {
-  const res = await fetch(JUPITER_VERIFIED, {
-    headers: { Accept: "application/json" },
-    next: { revalidate: 3600 },
-  });
-  if (!res.ok) throw new Error(`Jupiter V2 ${res.status}`);
+  const res = await fetch(JUPITER_VERIFIED, fetchOpts);
+  if (!res.ok) throw new Error(`Jupiter V2 ${res.status} ${res.statusText}`);
   const raw = (await res.json()) as JupiterTokenV2[];
+  if (!Array.isArray(raw)) throw new Error("Jupiter V2 returned non-array");
   return normalizeFromV2(raw);
 }
 
 async function fetchLegacy(): Promise<Token[]> {
-  const res = await fetch(JUPITER_LEGACY, {
-    headers: { Accept: "application/json" },
-    next: { revalidate: 3600 },
-  });
-  if (!res.ok) throw new Error(`Jupiter legacy ${res.status}`);
+  const res = await fetch(JUPITER_LEGACY, fetchOpts);
+  if (!res.ok) throw new Error(`Jupiter legacy ${res.status} ${res.statusText}`);
   const raw = (await res.json()) as JupiterTokenLegacy[];
+  if (!Array.isArray(raw)) throw new Error("Jupiter legacy returned non-array");
   return normalizeFromLegacy(raw);
 }
 
 export async function getSolanaTokenRegistry(): Promise<Token[]> {
-  if (cache && Date.now() - cache.fetchedAt < ONE_HOUR_MS) {
+  // Honor cache only if it has real content. Empty arrays are not cached
+  // — that prevents a single failed-fetch-cached-as-success from sticking
+  // for an hour.
+  if (cache && cache.tokens.length > 0 && Date.now() - cache.fetchedAt < ONE_HOUR_MS) {
     return cache.tokens;
   }
 
-  // Try V2 first, fall back to the legacy endpoint shape if V2 is unavailable.
   let tokens: Token[] = [];
+  let lastErr: unknown = null;
+
   try {
     tokens = await fetchV2();
   } catch (err) {
+    lastErr = err;
+  }
+
+  if (tokens.length === 0) {
     try {
       tokens = await fetchLegacy();
-    } catch {
-      if (cache) return cache.tokens;
-      throw err instanceof Error ? err : new Error(String(err));
+    } catch (err) {
+      lastErr = err;
     }
+  }
+
+  if (tokens.length === 0) {
+    if (cache && cache.tokens.length > 0) return cache.tokens;
+    throw lastErr instanceof Error ? lastErr : new Error("Jupiter registry unavailable");
   }
 
   cache = { fetchedAt: Date.now(), tokens };
