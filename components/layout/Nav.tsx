@@ -57,7 +57,7 @@ export function Nav() {
         <div className="nav-right">
           <span className="sec-badge">
             <span className="pulse-dot" />
-            SEC Compliant Interface
+            Non-custodial · Solana-first
           </span>
           <ConnectWalletButton />
           <button
@@ -91,7 +91,7 @@ export function Nav() {
             <div className="mobile-menu-foot">
               <span className="sec-badge" style={{ display: "inline-flex" }}>
                 <span className="pulse-dot" />
-                SEC Compliant Interface
+                Non-custodial · Solana-first
               </span>
             </div>
           </div>

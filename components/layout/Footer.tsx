@@ -9,8 +9,8 @@ export function Footer() {
             tknz<span className="logo-dot" />
           </div>
           <p>
-            A covered user interface operated in accordance with SEC Rule 15b9-1.
-            Non-custodial. No proprietary order flow. All routing decisions are data-derived.
+            A non-custodial swap aggregator. No proprietary order flow.
+            All routing decisions are data-derived and publicly auditable in source.
           </p>
         </div>
         <div className="foot-col">

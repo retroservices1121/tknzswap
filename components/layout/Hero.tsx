@@ -46,7 +46,7 @@ export function Hero() {
       <div>
         <span className="kicker">
           <span className="chip-tag">V1.5</span>
-          Covered user interface · Rule 15b9-1
+          Non-custodial · Solana-first · Cross-VM in one signature
         </span>
         <h1 className="headline">
           Bridge in. Trade out.

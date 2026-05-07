@@ -3,9 +3,9 @@ import "./globals.css";
 import { Providers } from "@/providers/Providers";
 
 export const metadata: Metadata = {
-  title: "tknz — SEC-compliant cross-chain swap aggregator",
+  title: "tknz — Solana-first cross-chain swap aggregator",
   description:
-    "Route any asset across Solana and EVM at the best price. Solana via DFlow. EVM via Li.Fi. Cross-VM via Mayan. Covered user interface under SEC Rule 15b9-1.",
+    "Trade across Solana and EVM in one signature. Solana via DFlow with Jito-bundle protection. EVM via Li.Fi. Cross-VM via Mayan Swift. Non-custodial.",
 };
 
 export const viewport = {
