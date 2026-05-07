@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSwapStore } from "@/store/swap";
 import { EVM_TOKENS, SOLANA_TOKENS } from "@/lib/tokens";
 import { useSolanaTokenRegistry } from "@/hooks/useSolanaTokenRegistry";
+import { useSolanaBalances } from "@/hooks/useSolanaBalances";
 import { TokenIcon } from "@/components/ui/TokenIcon";
 import { IconClose, IconSearch } from "@/components/ui/Icons";
 import { fmtAmt, fmtUSD } from "@/lib/format";
@@ -39,6 +40,12 @@ export function TokenModal() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { data: registry, isLoading: registryLoading } = useSolanaTokenRegistry();
+  const { data: solBalances } = useSolanaBalances();
+
+  const balanceFor = (t: Token): number => {
+    if (t.chainId === "solana") return solBalances?.get(t.address) ?? 0;
+    return t.bal ?? 0;
+  };
 
   const open = modal?.type === "token";
   const side = open ? modal.side : null;
@@ -72,15 +79,30 @@ export function TokenModal() {
   }, [chainFilter, registry]);
 
   const filtered: Token[] = useMemo(() => {
-    if (!q) return universe;
     const needle = q.toLowerCase().trim();
-    return universe.filter(
-      (t) =>
-        t.symbol.toLowerCase().includes(needle) ||
-        t.name.toLowerCase().includes(needle) ||
-        t.address.toLowerCase().includes(needle)
-    );
-  }, [universe, q]);
+    const matched = needle
+      ? universe.filter(
+          (t) =>
+            t.symbol.toLowerCase().includes(needle) ||
+            t.name.toLowerCase().includes(needle) ||
+            t.address.toLowerCase().includes(needle)
+        )
+      : universe;
+
+    // Tokens the user actually holds float to the top, sorted by balance.
+    // Then everything else in original (featured-first) order.
+    const balOf = (t: Token): number =>
+      t.chainId === "solana" ? solBalances?.get(t.address) ?? 0 : t.bal ?? 0;
+
+    const owned: Token[] = [];
+    const rest: Token[] = [];
+    for (const t of matched) {
+      if (balOf(t) > 0) owned.push(t);
+      else rest.push(t);
+    }
+    owned.sort((a, b) => balOf(b) - balOf(a));
+    return [...owned, ...rest];
+  }, [universe, q, solBalances]);
 
   const queryIsUnverifiedMint =
     chainFilter !== "evm" &&
@@ -169,8 +191,8 @@ export function TokenModal() {
                 </div>
               </div>
               <div className="token-row-right">
-                <div className="bal">{fmtAmt(t.bal ?? 0, t.symbol === "BONK" ? 0 : 4)}</div>
-                <div className="usd">{fmtUSD((t.bal ?? 0) * (t.usd ?? 0))}</div>
+                <div className="bal">{fmtAmt(balanceFor(t), t.symbol === "BONK" ? 0 : 4)}</div>
+                <div className="usd">{fmtUSD(balanceFor(t) * (t.usd ?? 0))}</div>
               </div>
             </div>
           ))}

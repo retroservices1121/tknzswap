@@ -1,19 +1,18 @@
 "use client";
 
-// Lightweight balance hook. Returns 0 when wallet isn't connected so the UI
-// renders deterministically. Real implementations should fetch via wagmi
-// (useBalance / useReadContracts) for EVM and getParsedTokenAccountsByOwner
-// for Solana. Kept thin so the build stays self-contained.
-
 import { useAccount, useBalance } from "wagmi";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useSolanaBalances } from "@/hooks/useSolanaBalances";
 import type { Token } from "@/types/token";
+
+const NATIVE_EVM = "0x0000000000000000000000000000000000000000";
 
 export function useTokenBalance(token: Token | null) {
   const { address: evmAddress } = useAccount();
   const { publicKey } = useWallet();
+  const { data: solBalances } = useSolanaBalances();
 
-  const isNativeEvm = token?.address === "0x0000000000000000000000000000000000000000";
+  const isNativeEvm = token?.address === NATIVE_EVM;
   const isEvm = !!token && token.chainId !== "solana";
 
   const evmQuery = useBalance({
@@ -26,8 +25,8 @@ export function useTokenBalance(token: Token | null) {
   if (!token) return { balance: 0, connected: false };
 
   if (token.chainId === "solana") {
-    // Real impl: fetch SPL balance via @solana/web3.js getParsedTokenAccountsByOwner
-    return { balance: 0, connected: !!publicKey };
+    const balance = solBalances?.get(token.address) ?? 0;
+    return { balance, connected: !!publicKey };
   }
 
   const formatted = evmQuery.data?.formatted ? parseFloat(evmQuery.data.formatted) : 0;
