@@ -114,7 +114,7 @@ export async function getSolanaTokenRegistry(): Promise<Token[]> {
   } catch (err) {
     try {
       tokens = await fetchLegacy();
-    } catch (legacyErr) {
+    } catch {
       if (cache) return cache.tokens;
       throw err instanceof Error ? err : new Error(String(err));
     }
