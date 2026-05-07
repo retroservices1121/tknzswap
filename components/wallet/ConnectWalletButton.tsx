@@ -7,10 +7,9 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { IconClose } from "@/components/ui/Icons";
 
-// Single entry-point button. When neither wallet is connected, opens a
-// chooser modal letting the user pick EVM (RainbowKit) or Solana.
-// When one or both are connected, summarizes the connection in the button
-// and opens a manage-connections modal on click.
+// Single-active-wallet pattern. Connecting one wallet disconnects the
+// other. Cross-VM swaps via Mayan still work — the user supplies a
+// destination address manually in the swap card.
 export function ConnectWalletButton() {
   const [open, setOpen] = useState(false);
 
@@ -36,7 +35,6 @@ export function ConnectWalletButton() {
     : null;
 
   const buttonLabel = (() => {
-    if (evmShort && solShort) return "2 wallets connected";
     if (evmShort) return evmShort;
     if (solShort) return solShort;
     return "Connect wallet";
@@ -44,93 +42,104 @@ export function ConnectWalletButton() {
 
   return (
     <ConnectButton.Custom>
-      {({ openConnectModal: openEvmModal, mounted }) => (
-        <>
-          <button
-            type="button"
-            className="connect-btn"
-            onClick={() => setOpen(true)}
-            disabled={!mounted}
-            style={
-              evmShort && !solShort
-                ? { color: "var(--blue)" }
-                : solShort && !evmShort
-                ? { color: "var(--accent)" }
-                : undefined
-            }
-          >
-            {buttonLabel}
-          </button>
+      {({ openConnectModal: openEvmModal, mounted }) => {
+        const handleConnectEvm = () => {
+          // Single-active-wallet pattern: disconnect Solana before EVM
+          // connect dialog opens, so we never end up with two active.
+          if (solPubkey) disconnectSol();
+          setOpen(false);
+          openEvmModal();
+        };
 
-          {open && (
-            <div className="modal-backdrop" onClick={() => setOpen(false)}>
-              <div
-                className="modal"
-                onClick={(e) => e.stopPropagation()}
-                style={{ width: 420, maxWidth: "calc(100vw - 24px)" }}
-              >
-                <div className="modal-head">
-                  <span className="modal-title">
-                    {evmShort || solShort ? "Manage wallets" : "Connect wallet"}
-                  </span>
-                  <button className="modal-close" onClick={() => setOpen(false)} type="button">
-                    <IconClose />
-                  </button>
-                </div>
+        const handleConnectSol = () => {
+          if (evmAddress) disconnectEvm();
+          setOpen(false);
+          openSolModal(true);
+        };
 
-                <div className="settings-body">
-                  <div className="setting-group">
-                    <div className="setting-label">EVM (Li.Fi)</div>
-                    <WalletRow
-                      color="blue"
-                      address={evmShort}
-                      onConnect={() => {
-                        setOpen(false);
-                        openEvmModal();
-                      }}
-                      onDisconnect={() => disconnectEvm()}
-                    />
+        return (
+          <>
+            <button
+              type="button"
+              className="connect-btn"
+              onClick={() => setOpen(true)}
+              disabled={!mounted}
+              style={
+                evmShort
+                  ? { color: "var(--blue)" }
+                  : solShort
+                    ? { color: "var(--accent)" }
+                    : undefined
+              }
+            >
+              {buttonLabel}
+            </button>
+
+            {open && (
+              <div className="modal-backdrop" onClick={() => setOpen(false)}>
+                <div
+                  className="modal"
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ width: 420, maxWidth: "calc(100vw - 24px)" }}
+                >
+                  <div className="modal-head">
+                    <span className="modal-title">
+                      {evmShort || solShort ? "Manage wallet" : "Connect wallet"}
+                    </span>
+                    <button className="modal-close" onClick={() => setOpen(false)} type="button">
+                      <IconClose />
+                    </button>
                   </div>
 
-                  <div className="setting-group">
-                    <div className="setting-label">
-                      <span className="brand-solana">Solana</span> (
-                      <span className="brand-dflow">DFlow</span>)
+                  <div className="settings-body">
+                    <div className="setting-group">
+                      <div className="setting-label">EVM</div>
+                      <WalletRow
+                        color="blue"
+                        address={evmShort}
+                        onConnect={handleConnectEvm}
+                        onDisconnect={() => disconnectEvm()}
+                      />
                     </div>
-                    <WalletRow
-                      color="green"
-                      address={solShort}
-                      onConnect={() => {
-                        setOpen(false);
-                        openSolModal(true);
-                      }}
-                      onDisconnect={() => disconnectSol()}
-                    />
-                  </div>
 
-                  <div
-                    style={{
-                      marginTop: 18,
-                      padding: "12px 14px",
-                      background: "var(--surface2)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 12,
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 10.5,
-                      lineHeight: 1.6,
-                      color: "var(--text3)",
-                      letterSpacing: "0.02em",
-                    }}
-                  >
-                    Connect both to swap on either layer without reconnecting. tknz
-                    never custodies — every transaction is signed in your wallet.
+                    <div className="setting-group">
+                      <div className="setting-label">
+                        <span className="brand-solana">Solana</span>
+                      </div>
+                      <WalletRow
+                        color="green"
+                        address={solShort}
+                        onConnect={handleConnectSol}
+                        onDisconnect={() => disconnectSol()}
+                      />
+                    </div>
+
+                    <div
+                      style={{
+                        marginTop: 18,
+                        padding: "12px 14px",
+                        background: "var(--surface2)",
+                        border: "1px solid var(--border)",
+                        borderRadius: 12,
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 10.5,
+                        lineHeight: 1.6,
+                        color: "var(--text3)",
+                        letterSpacing: "0.02em",
+                      }}
+                    >
+                      One wallet at a time. Switching auto-disconnects the previous
+                      wallet. For cross-VM swaps (EVM ↔ Solana), enter a destination
+                      address in the swap card. tknz never custodies — every
+                      transaction is signed in your wallet.
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-        </>
-      )}
+            )}
+          </>
+        );
+      }}
     </ConnectButton.Custom>
   );
 }

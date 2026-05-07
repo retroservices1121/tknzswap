@@ -4,6 +4,7 @@ interface Props {
     | "connect-solana"
     | "connect-both"
     | "enter-amount"
+    | "enter-destination"
     | "fetching"
     | "no-routes"
     | "ready"
@@ -22,6 +23,7 @@ export function SwapButton({ state, fromSym, toSym, engineColor, onClick }: Prop
     state === "connect-solana" ||
     state === "connect-both" ||
     state === "enter-amount" ||
+    state === "enter-destination" ||
     state === "fetching" ||
     state === "no-routes" ||
     state === "signing" ||
@@ -33,6 +35,7 @@ export function SwapButton({ state, fromSym, toSym, engineColor, onClick }: Prop
       case "connect-solana": return "Connect Solana wallet";
       case "connect-both": return "Connect both wallets";
       case "enter-amount": return "Enter amount";
+      case "enter-destination": return "Enter destination address";
       case "fetching": return "Fetching routes…";
       case "no-routes": return "No routes found";
       case "signing": return "Signing…";

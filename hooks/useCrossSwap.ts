@@ -37,7 +37,10 @@ export function useCrossSwap() {
   const [txid, setTxid] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function executeCrossSwap(quote: Quote) {
+  // destinationOverride: a manually-entered destination address. Required
+  // under the single-active-wallet pattern when the destination chain's
+  // wallet isn't currently connected.
+  async function executeCrossSwap(quote: Quote, destinationOverride?: string) {
     setIsSwapping(true);
     setError(null);
 
@@ -53,13 +56,14 @@ export function useCrossSwap() {
         if (!solPubkey || !signTransaction) {
           throw new Error("Solana wallet not connected");
         }
-        if (!evmAddress) {
-          throw new Error("EVM wallet not connected — required as cross-VM destination");
+        const destination = destinationOverride ?? evmAddress;
+        if (!destination) {
+          throw new Error("EVM destination address required");
         }
         const result = await swapFromSolana(
           quote,
           solPubkey.toBase58(),
-          evmAddress,
+          destination,
           referrerAddresses,
           signTransaction
         );
@@ -71,14 +75,15 @@ export function useCrossSwap() {
       if (!walletClient || !evmAddress) {
         throw new Error("EVM wallet not connected");
       }
-      if (!solPubkey) {
-        throw new Error("Solana wallet not connected — required as cross-VM destination");
+      const destination = destinationOverride ?? solPubkey?.toBase58();
+      if (!destination) {
+        throw new Error("Solana destination address required");
       }
       const signer = walletClientToEthersSigner(walletClient);
       const result = await swapFromEvm(
         quote,
         evmAddress,
-        solPubkey.toBase58(),
+        destination,
         referrerAddresses,
         signer,
         null,
@@ -102,7 +107,8 @@ export function useCrossSwap() {
     isSwapping,
     txid,
     error,
-    // True when the user has both wallets connected — required for any cross-VM swap.
-    bothWalletsReady: !!evmAddress && !!solPubkey,
+    // Source wallet for the active cross-VM pair (if any).
+    evmAddress,
+    solPubkey,
   };
 }

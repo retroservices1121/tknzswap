@@ -108,6 +108,7 @@ export function SwapCard() {
   } = useSwapStore();
 
   const [flipping, setFlipping] = useState(false);
+  const [destinationAddress, setDestinationAddress] = useState("");
   const { address: evmAddress } = useAccount();
   const { publicKey: solPubkey } = useWallet();
 
@@ -124,6 +125,22 @@ export function SwapCard() {
     mode === "same-sol" ? "dflow" : mode === "same-evm" ? "lifi" : "mayan";
   const engineColor: "green" | "blue" | "purple" =
     mode === "same-sol" ? "green" : mode === "same-evm" ? "blue" : "purple";
+
+  // For cross-VM mode under single-active-wallet, the user supplies a
+  // destination address manually since the destination chain's wallet
+  // can't be connected at the same time as the source chain's wallet.
+  const destinationChainKind: "solana" | "evm" | null =
+    mode === "cross-vm" && to ? (to.chainId === "solana" ? "solana" : "evm") : null;
+
+  const isValidDestination = (addr: string, kind: "solana" | "evm"): boolean => {
+    const trimmed = addr.trim();
+    if (kind === "solana") return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(trimmed);
+    return /^0x[a-fA-F0-9]{40}$/.test(trimmed);
+  };
+
+  const destinationOk =
+    mode !== "cross-vm" ||
+    (destinationChainKind && isValidDestination(destinationAddress, destinationChainKind));
 
   // Decimal-aware raw amount (used by same-chain engines).
   const rawAmount = useMemo(
@@ -233,7 +250,10 @@ export function SwapCard() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await evmSwap.executeEvmSwap(activeRoute.raw as any);
       } else {
-        await crossSwap.executeCrossSwap(activeRoute.raw as MayanQuote);
+        await crossSwap.executeCrossSwap(
+          activeRoute.raw as MayanQuote,
+          destinationAddress.trim()
+        );
       }
     } catch {
       // Errors surfaced via the per-hook `error` field.
@@ -242,14 +262,15 @@ export function SwapCard() {
     }
   };
 
-  // Button state machine.
+  // Button state machine. Under single-active-wallet, cross-VM only needs
+  // the SOURCE wallet connected; destination is a manually-entered address.
   const buttonState: Parameters<typeof SwapButton>[0]["state"] = (() => {
     if (busy === "signing") return "signing";
     if (busy === "confirming") return "confirming";
     if (mode === "cross-vm") {
-      if (!evmAddress && !solPubkey) return "connect-both";
-      if (!evmAddress) return "connect-evm";
-      if (!solPubkey) return "connect-solana";
+      const sourceIsSolana = from?.chainId === "solana";
+      if (sourceIsSolana && !solPubkey) return "connect-solana";
+      if (!sourceIsSolana && !evmAddress) return "connect-evm";
     } else if (mode === "same-sol" && !solPubkey) {
       return "connect-solana";
     } else if (mode === "same-evm" && !evmAddress) {
@@ -258,6 +279,7 @@ export function SwapCard() {
     if (!amount || (mode === "cross-vm" ? humanAmount <= 0 : rawAmount === "0")) return "enter-amount";
     if (isLoading) return "fetching";
     if (!routes || routes.length === 0) return "no-routes";
+    if (mode === "cross-vm" && !destinationOk) return "enter-destination";
     return "ready";
   })();
 
@@ -342,6 +364,34 @@ export function SwapCard() {
         onPick={() => openModal({ type: "token", side: "to" })}
         readOnly
       />
+
+      {mode === "cross-vm" && destinationChainKind && (
+        <div className="cross-dest">
+          <label className="cross-dest-label">
+            Destination address ({destinationChainKind === "solana" ? "Solana" : "EVM"})
+          </label>
+          <input
+            className={
+              "cross-dest-input" +
+              (destinationAddress && !destinationOk ? " invalid" : "")
+            }
+            type="text"
+            value={destinationAddress}
+            onChange={(e) => setDestinationAddress(e.target.value)}
+            placeholder={
+              destinationChainKind === "solana"
+                ? "Paste a Solana wallet address"
+                : "Paste a 0x… EVM address"
+            }
+            spellCheck={false}
+            autoCapitalize="none"
+            autoCorrect="off"
+          />
+          {destinationAddress && !destinationOk && (
+            <div className="cross-dest-err">Invalid {destinationChainKind === "solana" ? "Solana mint-format" : "EVM 0x"} address</div>
+          )}
+        </div>
+      )}
 
       <RouteDisplay
         routes={routes}
